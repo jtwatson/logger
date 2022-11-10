@@ -21,14 +21,14 @@ import (
 //
 // If not configured, the output is set to stderr by default.
 func NewRequestLogger(client *logging.Client, projectID string, opts ...logging.LoggerOption) func(http.Handler) http.Handler {
-	return handler(client, projectID, true)
+	return handler(client, projectID, true, opts...)
 }
 
 // NewLogger is the same as NewHandler, but only logs the parent request
 // if a child log is generated during the request. This should be used
 // for high frequency request paths to prevent logging every request
 func NewLogger(client *logging.Client, projectID string, opts ...logging.LoggerOption) func(http.Handler) http.Handler {
-	return handler(client, projectID, false)
+	return handler(client, projectID, false, opts...)
 }
 
 func handler(client *logging.Client, projectID string, logAll bool, opts ...logging.LoggerOption) func(http.Handler) http.Handler {
