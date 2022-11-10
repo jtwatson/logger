@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/jtwatson/logger/compare/v0.0.2...v0.0.3) (2022-11-10)
+
+
+### Bug Fixes
+
+* Options were not being passed into handler ([#7](https://github.com/jtwatson/logger/issues/7)) ([9271a60](https://github.com/jtwatson/logger/commit/9271a606beb53799d69ac6a11b537d7ac2011a37))
+
 ## [0.0.2](https://github.com/jtwatson/logger/compare/v0.0.1...v0.0.2) (2022-11-08)
 
 
