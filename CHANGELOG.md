@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.0](https://github.com/jtwatson/logger/compare/v0.0.3...v0.1.0) (2023-01-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* Redesign public interface.
+
+### Features
+
+* Implement Log Exporters ([6bd8c6a](https://github.com/jtwatson/logger/commit/6bd8c6a9c3f412e14db86170d6cf3a71618048f3))
+
+
+### Documentation
+
+* Update package documentation ([6bd8c6a](https://github.com/jtwatson/logger/commit/6bd8c6a9c3f412e14db86170d6cf3a71618048f3))
+
+
+### Code Refactoring
+
+* Redesign public interface. ([6bd8c6a](https://github.com/jtwatson/logger/commit/6bd8c6a9c3f412e14db86170d6cf3a71618048f3))
+* Rename public methods to fetch the logger ([6bd8c6a](https://github.com/jtwatson/logger/commit/6bd8c6a9c3f412e14db86170d6cf3a71618048f3))
+
 ## [0.0.3](https://github.com/jtwatson/logger/compare/v0.0.2...v0.0.3) (2022-11-10)
 
 
