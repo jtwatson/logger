@@ -13,8 +13,9 @@ import (
 
 func Test_consoleLogger(t *testing.T) {
 	type args struct {
-		v  []interface{}
-		v2 interface{}
+		v       []interface{}
+		v2      interface{}
+		noColor bool
 	}
 	tests := []struct {
 		name       string
@@ -29,11 +30,18 @@ func Test_consoleLogger(t *testing.T) {
 		wantErrorf string
 	}{
 		{
-			name: "Test 1", args: args{v: []interface{}{"Message"}, v2: "Message"},
+			name: "Test with color", args: args{v: []interface{}{"Message"}, v2: "Message"},
 			wantDebug: "\x1b[37mDEBUG\x1b[0m: /path Message\n", wantDebugf: "\x1b[37mDEBUG\x1b[0m: /path Formatted Message\n",
 			wantInfo: "\x1b[34mINFO \x1b[0m: /path Message\n", wantInfof: "\x1b[34mINFO \x1b[0m: /path Formatted Message\n",
 			wantWarn: "\x1b[33mWARN \x1b[0m: /path Message\n", wantWarnf: "\x1b[33mWARN \x1b[0m: /path Formatted Message\n",
 			wantError: "\x1b[31mERROR\x1b[0m: /path Message\n", wantErrorf: "\x1b[31mERROR\x1b[0m: /path Formatted Message\n",
+		},
+		{
+			name: "Test no color", args: args{v: []interface{}{"Message"}, v2: "Message", noColor: true},
+			wantDebug: "DEBUG: /path Message\n", wantDebugf: "DEBUG: /path Formatted Message\n",
+			wantInfo: "INFO : /path Message\n", wantInfof: "INFO : /path Formatted Message\n",
+			wantWarn: "WARN : /path Message\n", wantWarnf: "WARN : /path Formatted Message\n",
+			wantError: "ERROR: /path Message\n", wantErrorf: "ERROR: /path Formatted Message\n",
 		},
 	}
 	for _, tt := range tests {
@@ -44,7 +52,7 @@ func Test_consoleLogger(t *testing.T) {
 			t.Cleanup(func() { log.SetOutput(os.Stderr) })
 
 			u, _ := url.Parse("http://some.domain.com/path")
-			l := &ConsoleLogger{r: &http.Request{URL: u}}
+			l := &consoleLogger{r: &http.Request{URL: u}, noColor: tt.args.noColor}
 			format := "Formatted %s"
 
 			l.Debug(ctx, tt.args.v2)
@@ -102,26 +110,28 @@ func TestNewConsoleLogger(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		r *http.Request
+		r       *http.Request
+		noColor bool
 	}
 	tests := []struct {
 		name string
 		args args
-		want Logger
+		want ctxLogger
 	}{
 		{
 			name: "some request",
 			args: args{
-				r: &http.Request{},
+				r:       &http.Request{},
+				noColor: true,
 			},
-			want: &ConsoleLogger{r: &http.Request{}},
+			want: &consoleLogger{r: &http.Request{}, noColor: true},
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := NewConsoleLogger(tt.args.r); !reflect.DeepEqual(got, tt.want) {
+			if got := newConsoleLogger(tt.args.r, tt.args.noColor); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewConsoleLogger() = %v, want %v", got, tt.want)
 			}
 		})

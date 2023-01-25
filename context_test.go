@@ -1,123 +1,87 @@
 package logger
 
 import (
-	"bytes"
 	"context"
-	"errors"
+	"net/http"
+	"reflect"
 	"testing"
 )
 
-func TestContextLogger(t *testing.T) {
+func Test_fromContext(t *testing.T) {
 	t.Parallel()
 
+	type testLogger struct {
+		ctxLogger
+	}
+
 	type args struct {
-		v  []interface{}
-		v2 interface{}
+		ctx context.Context
 	}
 	tests := []struct {
-		name       string
-		args       args
-		wantDebug  string
-		wantDebugf string
-		wantInfo   string
-		wantInfof  string
-		wantWarn   string
-		wantWarnf  string
-		wantError  string
-		wantErrorf string
+		name string
+		args args
+		want ctxLogger
 	}{
 		{
-			name: "Strings",
+			name: "logger from ctx",
 			args: args{
-				v:  []interface{}{"Message"},
-				v2: "Message",
+				newContext(context.Background(), &testLogger{}),
 			},
-			wantDebug:  "Message",
-			wantDebugf: "Formatted Message",
-			wantInfo:   "Message",
-			wantInfof:  "Formatted Message",
-			wantWarn:   "Message",
-			wantWarnf:  "Formatted Message",
-			wantError:  "Message",
-			wantErrorf: "Formatted Message",
+			want: &testLogger{},
 		},
 		{
-			name: "String & Error",
+			name: "StdErrLogger: ctx nil",
+			want: &stdErrLogger{},
+		},
+		{
+			name: "StdErrLogger: ctx empty",
 			args: args{
-				v:  []interface{}{"Message"},
-				v2: errors.New("Message"),
+				ctx: context.Background(),
 			},
-			wantDebug:  "Message",
-			wantDebugf: "Formatted Message",
-			wantInfo:   "Message",
-			wantInfof:  "Formatted Message",
-			wantWarn:   "Message",
-			wantWarnf:  "Formatted Message",
-			wantError:  "Message",
-			wantErrorf: "Formatted Message",
+			want: &stdErrLogger{},
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			var buf bytes.Buffer
-			ctx := NewContext(context.Background(), &GCPLogger{
-				lg: &testLogger{
-					buf: &buf,
-				},
-			})
-
-			format := "Formatted %s"
-
-			Debug(ctx, tt.args.v2)
-			if s := buf.String(); s != tt.wantDebug {
-				t.Errorf("stdErrLogger.Debug() value = %v, wantValue %v", s, tt.wantDebug)
+			if got := fromContext(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("fromContext() = %v, want %v", got, tt.want)
 			}
-			buf.Reset()
+		})
+	}
+}
 
-			Debugf(ctx, format, tt.args.v...)
-			if s := buf.String(); s != tt.wantDebugf {
-				t.Errorf("stdErrLogger.Debug() value = %v, wantValue %v", s, tt.wantDebugf)
-			}
-			buf.Reset()
+func Test_fromRequest(t *testing.T) {
+	t.Parallel()
 
-			Info(ctx, tt.args.v2)
-			if s := buf.String(); s != tt.wantInfo {
-				t.Errorf("stdErrLogger.Info() value = %v, wantValue %v", s, tt.wantInfo)
+	type args struct {
+		r *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+		want ctxLogger
+	}{
+		{
+			name: "nil request",
+			want: &stdErrLogger{},
+		},
+		{
+			name: "empty request ctx",
+			args: args{
+				r: &http.Request{},
+			},
+			want: &stdErrLogger{},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := fromRequest(tt.args.r); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("fromRequest() = %v, want %v", got, tt.want)
 			}
-			buf.Reset()
-
-			Infof(ctx, format, tt.args.v...)
-			if s := buf.String(); s != tt.wantInfof {
-				t.Errorf("stdErrLogger.Info() value = %v, wantValue %v", s, tt.wantInfof)
-			}
-			buf.Reset()
-
-			Warn(ctx, tt.args.v2)
-			if s := buf.String(); s != tt.wantWarn {
-				t.Errorf("stdErrLogger.Warn() value = %v, wantValue %v", s, tt.wantWarn)
-			}
-			buf.Reset()
-
-			Warnf(ctx, format, tt.args.v...)
-			if s := buf.String(); s != tt.wantWarnf {
-				t.Errorf("stdErrLogger.Warn() value = %v, wantValue %v", s, tt.wantWarnf)
-			}
-			buf.Reset()
-
-			Error(ctx, tt.args.v2)
-			if s := buf.String(); s != tt.wantError {
-				t.Errorf("stdErrLogger.Error() value = %v, wantValue %v", s, tt.wantError)
-			}
-			buf.Reset()
-
-			Errorf(ctx, format, tt.args.v...)
-			if s := buf.String(); s != tt.wantErrorf {
-				t.Errorf("stdErrLogger.Error() value = %v, wantValue %v", s, tt.wantErrorf)
-			}
-			buf.Reset()
 		})
 	}
 }

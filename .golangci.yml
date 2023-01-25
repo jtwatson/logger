@@ -176,11 +176,6 @@ issues:
         - paralleltest
       text: Test_traceIDFromRequest|TestNewRequestLogger_NewLogger
 
-    - path: std\.go
-      linters:
-        - gochecknoglobals
-      text: StdErrLogger
-
     - path: gcplogger_test\.go|handler_test\.go
       linters:
         - gocritic

@@ -20,7 +20,7 @@ func TestNew(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Logger
+		want ctxLogger
 	}{
 		{
 			name: "new",
@@ -28,7 +28,7 @@ func TestNew(t *testing.T) {
 				lg:      &logging.Logger{},
 				traceID: "hello",
 			},
-			want: &GCPLogger{
+			want: &gcpLogger{
 				lg:      &logging.Logger{},
 				traceID: "hello",
 			},
@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := NewGCPLogger(tt.args.lg, tt.args.traceID); !reflect.DeepEqual(got, tt.want) {
+			if got := newGCPLogger(tt.args.lg, tt.args.traceID); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -106,7 +106,7 @@ func Test_logger(t *testing.T) {
 			ctx := context.Background()
 			var buf bytes.Buffer
 
-			l := &GCPLogger{
+			l := &gcpLogger{
 				lg: &testLogger{
 					buf: &buf,
 				},
@@ -168,5 +168,5 @@ type testLogger struct {
 }
 
 func (t *testLogger) Log(e logging.Entry) {
-	_, _ = t.buf.WriteString(e.Payload.(payload).Message.(string))
+	_, _ = t.buf.WriteString(e.Payload.(gcpPayload).Message.(string))
 }

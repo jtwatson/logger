@@ -15,63 +15,95 @@ const (
 	gray   color = 37
 )
 
-// NewConsoleLogger logs all output to console
-func NewConsoleLogger(r *http.Request) *ConsoleLogger {
-	return &ConsoleLogger{r}
+// ConsoleExporter implements exporting to Google Cloud Logging
+type ConsoleExporter struct {
+	noColor bool
 }
 
-type ConsoleLogger struct {
-	r *http.Request
+// NewConsoleExporter returns a configured ConsoleExporter
+func NewConsoleExporter() *ConsoleExporter {
+	return &ConsoleExporter{}
+}
+
+// NoColor controls if this logger will use color to highlight log level
+func (e *ConsoleExporter) NoColor(v bool) *ConsoleExporter {
+	e.noColor = v
+
+	return e
+}
+
+// Middleware returns a middleware that exports logs to Google Cloud Logging
+func (e *ConsoleExporter) Middleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(newContext(r.Context(), newConsoleLogger(r, e.noColor)))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+type consoleLogger struct {
+	r       *http.Request
+	noColor bool
+}
+
+// newConsoleLogger logs all output to console
+func newConsoleLogger(r *http.Request, noColor bool) *consoleLogger {
+	return &consoleLogger{r: r, noColor: noColor}
 }
 
 // Debug logs a debug message.
-func (l *ConsoleLogger) Debug(ctx context.Context, v interface{}) {
+func (l *consoleLogger) Debug(ctx context.Context, v interface{}) {
 	l.console("DEBUG", gray, v)
 }
 
 // Debugf logs a debug message with format.
-func (l *ConsoleLogger) Debugf(ctx context.Context, format string, v ...interface{}) {
+func (l *consoleLogger) Debugf(ctx context.Context, format string, v ...interface{}) {
 	l.consolef("DEBUG", gray, format, v...)
 }
 
 // Info logs a info message.
-func (l *ConsoleLogger) Info(ctx context.Context, v interface{}) {
+func (l *consoleLogger) Info(ctx context.Context, v interface{}) {
 	l.console("INFO ", blue, v)
 }
 
 // Infof logs a info message with format.
-func (l *ConsoleLogger) Infof(ctx context.Context, format string, v ...interface{}) {
+func (l *consoleLogger) Infof(ctx context.Context, format string, v ...interface{}) {
 	l.consolef("INFO ", blue, format, v...)
 }
 
 // Warn logs a warning message.
-func (l *ConsoleLogger) Warn(ctx context.Context, v interface{}) {
+func (l *consoleLogger) Warn(ctx context.Context, v interface{}) {
 	l.console("WARN ", yellow, v)
 }
 
 // Warnf logs a warning message with format.
-func (l *ConsoleLogger) Warnf(ctx context.Context, format string, v ...interface{}) {
+func (l *consoleLogger) Warnf(ctx context.Context, format string, v ...interface{}) {
 	l.consolef("WARN ", yellow, format, v...)
 }
 
 // Error logs an error message.
-func (l *ConsoleLogger) Error(ctx context.Context, v interface{}) {
+func (l *consoleLogger) Error(ctx context.Context, v interface{}) {
 	l.console("ERROR", red, v)
 }
 
 // Errorf logs an error message with format.
-func (l *ConsoleLogger) Errorf(ctx context.Context, format string, v ...interface{}) {
+func (l *consoleLogger) Errorf(ctx context.Context, format string, v ...interface{}) {
 	l.consolef("ERROR", red, format, v...)
 }
 
-func (l *ConsoleLogger) console(level string, c color, v interface{}) {
-	log.Printf(colorPrint(level, c)+": %s %s", l.r.URL.Path, v)
+func (l *consoleLogger) console(level string, c color, v interface{}) {
+	log.Printf(l.colorPrint(level, c)+": %s %s", l.r.URL.Path, v)
 }
 
-func (l *ConsoleLogger) consolef(level string, c color, format string, v ...interface{}) {
-	log.Printf(colorPrint(level, c)+": "+l.r.URL.Path+" "+format, v...)
+func (l *consoleLogger) consolef(level string, c color, format string, v ...interface{}) {
+	log.Printf(l.colorPrint(level, c)+": "+l.r.URL.Path+" "+format, v...)
 }
 
-func colorPrint(s string, c color) string {
+func (l *consoleLogger) colorPrint(s string, c color) string {
+	if l.noColor {
+		return s
+	}
+
 	return string([]byte{0x1b, '[', byte('0' + c/10), byte('0' + c%10), 'm'}) + s + "\x1b[0m"
 }
