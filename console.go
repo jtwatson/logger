@@ -35,11 +35,21 @@ func (e *ConsoleExporter) NoColor(v bool) *ConsoleExporter {
 // Middleware returns a middleware that exports logs to Google Cloud Logging
 func (e *ConsoleExporter) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r = r.WithContext(newContext(r.Context(), newConsoleLogger(r, e.noColor)))
-			next.ServeHTTP(w, r)
-		})
+		return &consoleHandler{
+			next:    next,
+			noColor: e.noColor,
+		}
 	}
+}
+
+type consoleHandler struct {
+	next    http.Handler
+	noColor bool
+}
+
+func (c *consoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = r.WithContext(newContext(r.Context(), newConsoleLogger(r, c.noColor)))
+	c.next.ServeHTTP(w, r)
 }
 
 type consoleLogger struct {

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_fromContext(t *testing.T) {
+func Test_fromCtx(t *testing.T) {
 	t.Parallel()
 
 	type testLogger struct {
@@ -52,7 +52,7 @@ func Test_fromContext(t *testing.T) {
 	}
 }
 
-func Test_fromRequest(t *testing.T) {
+func Test_fromReq(t *testing.T) {
 	t.Parallel()
 
 	type args struct {

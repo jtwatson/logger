@@ -27,11 +27,12 @@ func NewGoogleCloudExporter(client *logging.Client, projectID string, opts ...lo
 		projectID: projectID,
 		client:    client,
 		opts:      opts,
+		logAll:    true,
 	}
 }
 
 // LogAll controls if this logger will log all requests, or only requests that contain
-// logs written to the request Logger
+// logs written to the request Logger (default: true)
 func (e *GoogleCloudExporter) LogAll(v bool) *GoogleCloudExporter {
 	e.logAll = v
 
@@ -41,61 +42,67 @@ func (e *GoogleCloudExporter) LogAll(v bool) *GoogleCloudExporter {
 // Middleware returns a middleware that exports logs to Google Cloud Logging
 func (e *GoogleCloudExporter) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		parentLogger := e.client.Logger(
-			"request_parent_log",
-			e.opts...,
-		)
-
-		childLogger := e.client.Logger(
-			"request_child_log",
-			e.opts...,
-		)
-
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			begin := time.Now()
-			traceID := gcpTraceIDFromRequest(r, e.projectID)
-			l := newGCPLogger(childLogger, traceID)
-			r = r.WithContext(newContext(r.Context(), l))
-			sw := &statusWriter{ResponseWriter: w}
-
-			next.ServeHTTP(sw, r)
-
-			l.mu.Lock()
-			logCount := l.logCount
-			maxSeverity := l.maxSeverity
-			l.mu.Unlock()
-
-			if !e.logAll && logCount == 0 {
-				return
-			}
-
-			// status code should also set the minimum maxSeverity to Error
-			if sw.Status() > 399 && maxSeverity < logging.Error {
-				maxSeverity = logging.Error
-			}
-
-			sc := trace.SpanFromContext(r.Context()).SpanContext()
-
-			parentLogger.Log(logging.Entry{
-				Timestamp:    begin,
-				Severity:     maxSeverity,
-				Trace:        traceID,
-				SpanID:       sc.SpanID().String(),
-				TraceSampled: sc.IsSampled(),
-				Payload: gcpPayload{
-					Message: "Parent Log Entry",
-				},
-				HTTPRequest: &logging.HTTPRequest{
-					Request:      r,
-					RequestSize:  requestSize(r.Header.Get("Content-Length")),
-					Latency:      time.Since(begin),
-					Status:       sw.Status(),
-					ResponseSize: sw.length,
-					RemoteIP:     r.Header.Get("X-Forwarded-For"),
-				},
-			})
-		})
+		return &gcpHandler{
+			next:         next,
+			parentLogger: e.client.Logger("request_parent_log", e.opts...),
+			childLogger:  e.client.Logger("request_child_log", e.opts...),
+			projectID:    e.projectID,
+			logAll:       e.logAll,
+		}
 	}
+}
+
+type gcpHandler struct {
+	next         http.Handler
+	parentLogger logger
+	childLogger  logger
+	projectID    string
+	logAll       bool
+}
+
+func (g *gcpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	begin := time.Now()
+	traceID := gcpTraceIDFromRequest(r, g.projectID)
+	l := newGCPLogger(g.childLogger, traceID)
+	r = r.WithContext(newContext(r.Context(), l))
+	sw := &statusWriter{ResponseWriter: w}
+
+	g.next.ServeHTTP(sw, r)
+
+	l.mu.Lock()
+	logCount := l.logCount
+	maxSeverity := l.maxSeverity
+	l.mu.Unlock()
+
+	if !g.logAll && logCount == 0 {
+		return
+	}
+
+	// status code should also set the minimum maxSeverity to Error
+	if sw.Status() > 399 && maxSeverity < logging.Error {
+		maxSeverity = logging.Error
+	}
+
+	sc := trace.SpanFromContext(r.Context()).SpanContext()
+
+	g.parentLogger.Log(logging.Entry{
+		Timestamp:    begin,
+		Severity:     maxSeverity,
+		Trace:        traceID,
+		SpanID:       sc.SpanID().String(),
+		TraceSampled: sc.IsSampled(),
+		Payload: map[string]interface{}{
+			"message": "Parent Log Entry",
+		},
+		HTTPRequest: &logging.HTTPRequest{
+			Request:      r,
+			RequestSize:  requestSize(r.Header.Get("Content-Length")),
+			Latency:      time.Since(begin),
+			Status:       sw.Status(),
+			ResponseSize: sw.length,
+			RemoteIP:     r.Header.Get("X-Forwarded-For"),
+		},
+	})
 }
 
 // gcpTraceIDFromRequest formats a trace_id value for GCP Stackdriver
@@ -114,10 +121,6 @@ func gcpTraceIDFromRequest(r *http.Request, projectID string) string {
 	}
 
 	return fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
-}
-
-type gcpPayload struct {
-	Message interface{} `json:"message"`
 }
 
 // logger interface exists for testability
@@ -196,8 +199,8 @@ func (l *gcpLogger) log(ctx context.Context, severity logging.Severity, p interf
 
 	l.lg.Log(
 		logging.Entry{
-			Payload: gcpPayload{
-				Message: p,
+			Payload: map[string]interface{}{
+				"message": p,
 			},
 			Severity:     severity,
 			Trace:        l.traceID,

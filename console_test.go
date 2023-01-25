@@ -5,11 +5,198 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/go-test/deep"
 )
+
+func TestNewConsoleExporter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		want *ConsoleExporter
+	}{
+		{
+			name: "Simple Constructor",
+			want: &ConsoleExporter{},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := NewConsoleExporter(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewConsoleExporter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConsoleExporter_NoColor(t *testing.T) {
+	t.Parallel()
+
+	type fields struct {
+		noColor bool
+	}
+	type args struct {
+		v bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *ConsoleExporter
+	}{
+		{
+			name: "noColor=true",
+			fields: fields{
+				noColor: false,
+			},
+			args: args{
+				v: true,
+			},
+			want: &ConsoleExporter{
+				noColor: true,
+			},
+		},
+		{
+			name: "noColor=false",
+			fields: fields{
+				noColor: true,
+			},
+			args: args{
+				v: false,
+			},
+			want: &ConsoleExporter{
+				noColor: false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			e := &ConsoleExporter{
+				noColor: tt.fields.noColor,
+			}
+			if got := e.NoColor(tt.args.v); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConsoleExporter.NoColor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConsoleExporter_Middleware(t *testing.T) {
+	t.Parallel()
+
+	type fields struct {
+		noColor bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   func(http.Handler) http.Handler
+	}{
+		{
+			name: "call Middleware",
+			fields: fields{
+				noColor: true,
+			},
+			want: func(next http.Handler) http.Handler {
+				return &consoleHandler{
+					next:    next,
+					noColor: true,
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+			e := &ConsoleExporter{
+				noColor: tt.fields.noColor,
+			}
+			got := e.Middleware()(next)
+			if diff := deep.Equal(got, tt.want(next)); diff != nil {
+				t.Errorf("ConsoleExporter.Middleware() = %v", diff)
+			}
+		})
+	}
+}
+
+func Test_consoleHandler_ServeHTTP(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "run it",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var handlerCalled bool
+			c := &consoleHandler{
+				next: http.HandlerFunc(
+					func(w http.ResponseWriter, r *http.Request) {
+						handlerCalled = true
+					},
+				),
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			c.ServeHTTP(w, r)
+
+			if !handlerCalled {
+				t.Errorf("Failed to call handler")
+			}
+		})
+	}
+}
+
+func TestNewConsoleLogger(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		r       *http.Request
+		noColor bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want ctxLogger
+	}{
+		{
+			name: "some request",
+			args: args{
+				r:       &http.Request{},
+				noColor: true,
+			},
+			want: &consoleLogger{r: &http.Request{}, noColor: true},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := newConsoleLogger(tt.args.r, tt.args.noColor); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewConsoleLogger() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func Test_consoleLogger(t *testing.T) {
 	type args struct {
@@ -102,38 +289,6 @@ func Test_consoleLogger(t *testing.T) {
 				t.Errorf("stdErrLogger.Error() value = %v, wantValue %v", s[20:], tt.wantErrorf)
 			}
 			buf.Reset()
-		})
-	}
-}
-
-func TestNewConsoleLogger(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		r       *http.Request
-		noColor bool
-	}
-	tests := []struct {
-		name string
-		args args
-		want ctxLogger
-	}{
-		{
-			name: "some request",
-			args: args{
-				r:       &http.Request{},
-				noColor: true,
-			},
-			want: &consoleLogger{r: &http.Request{}, noColor: true},
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			if got := newConsoleLogger(tt.args.r, tt.args.noColor); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewConsoleLogger() = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }

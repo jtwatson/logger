@@ -174,7 +174,13 @@ issues:
       linters:
         - tparallel
         - paralleltest
-      text: Test_traceIDFromRequest|TestNewRequestLogger_NewLogger
+      text: TestNewRequestLogger
+
+    - path: gcp_test\.go
+      linters:
+        - tparallel
+        - paralleltest
+      text: Test_gcpTraceIDFromRequest|TestGoogleCloudExporter_Middleware
 
     - path: gcp_test\.go|handler_test\.go
       linters:
