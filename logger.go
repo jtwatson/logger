@@ -1,6 +1,10 @@
-// logger is an HTTP request logger that implements correlated logging to GCP via Logging REST API. Each HTTP request is l
-// ogged as the parent with all event logs occurring during the request as child logs. This allows for easy viewing in
-// GCP Log Explorer. The logs will also be correlated to Cloud Trace if you instrument your code with tracing.
+// package logger is an HTTP request logger that implements correlated logging to one of several supported platforms.
+// Each HTTP request is logged as the parent log, with all logs generated during the request as child logs.
+//
+// The Logging destination is configured with an Exporter. This package provides Exporters for Google Cloud Logging
+// and Console Logging.
+//
+// The GoogleCloudExporter will also correlate logs to Cloud Trace if you instrument your code with tracing.
 package logger
 
 import (
@@ -8,57 +12,66 @@ import (
 	"net/http"
 )
 
-type key int
-
-const (
-	logKey key = iota
-)
-
-// FromContext gets the logger out of the context.
-// If not logger is stored in the context, a NopLogger is returned.
-func FromContext(ctx context.Context) Logger {
-	if ctx == nil {
-		return StdErrLogger
-	}
-	l, ok := ctx.Value(logKey).(Logger)
-	if !ok {
-		return StdErrLogger
-	}
-
-	return l
+// Logger implements logging methods for this package
+type Logger struct {
+	ctx context.Context
+	lg  ctxLogger
 }
 
-// FromRequest gets the logger in the request's context.
-// This is a shortcut for xlog.FromContext(r.Context())
-func FromRequest(r *http.Request) Logger {
-	if r == nil {
-		return StdErrLogger
+// Ctx returns the logger from the context. If
+// no logger is found, it will write to stderr
+func Ctx(ctx context.Context) *Logger {
+	return &Logger{
+		ctx: ctx,
+		lg:  fromCtx(ctx),
 	}
-
-	return FromContext(r.Context())
 }
 
-// NewContext returns a copy of the parent context and associates it with the provided logger.
-func NewContext(ctx context.Context, l Logger) context.Context {
-	return context.WithValue(ctx, logKey, l)
+// Req returns the logger from the http request. If
+// no logger is found, it will write to stderr
+func Req(r *http.Request) *Logger {
+	return &Logger{
+		ctx: r.Context(),
+		lg:  fromReq(r),
+	}
 }
 
-// Logger defines the interface for a xlog compatible logger
-type Logger interface {
-	// Debug logs a debug message.
-	Debug(ctx context.Context, v interface{})
-	// Debugf logs a debug message with format.
-	Debugf(ctx context.Context, format string, v ...interface{})
-	// Info logs a info message.
-	Info(ctx context.Context, v interface{})
-	// Infof logs a info message with format.
-	Infof(ctx context.Context, format string, v ...interface{})
-	// Warn logs a warning message.
-	Warn(ctx context.Context, v interface{})
-	// Warnf logs a warning message with format.
-	Warnf(ctx context.Context, format string, v ...interface{})
-	// Error logs an error message.
-	Error(ctx context.Context, v interface{})
-	// Errorf logs an error message with format.
-	Errorf(ctx context.Context, format string, v ...interface{})
+// Debug logs a debug message.
+func (l *Logger) Debug(v interface{}) {
+	l.lg.Debug(l.ctx, v)
+}
+
+// Debugf logs a debug message with format.
+func (l *Logger) Debugf(format string, v ...interface{}) {
+	l.lg.Debugf(l.ctx, format, v...)
+}
+
+// Info logs a info message.
+func (l *Logger) Info(v interface{}) {
+	l.lg.Info(l.ctx, v)
+}
+
+// Infof logs a info message with format.
+func (l *Logger) Infof(format string, v ...interface{}) {
+	l.lg.Infof(l.ctx, format, v...)
+}
+
+// Warn logs a warning message.
+func (l *Logger) Warn(v interface{}) {
+	l.lg.Warn(l.ctx, v)
+}
+
+// Warnf logs a warning message with format.
+func (l *Logger) Warnf(format string, v ...interface{}) {
+	l.lg.Warnf(l.ctx, format, v...)
+}
+
+// Error logs an error message.
+func (l *Logger) Error(v interface{}) {
+	l.lg.Error(l.ctx, v)
+}
+
+// Errorf logs an error message with format.
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.lg.Errorf(l.ctx, format, v...)
 }

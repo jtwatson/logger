@@ -5,9 +5,6 @@ import (
 	"log"
 )
 
-// StdErrLogger logs all output to stdout
-var StdErrLogger Logger = &stdErrLogger{}
-
 type stdErrLogger struct{}
 
 // Debug logs a debug message.
