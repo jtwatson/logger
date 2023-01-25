@@ -2,4 +2,9 @@
 
 [![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/jtwatson/logger)
 
-**logger** is an HTTP request logger that implements correlated logging to GCP via Logging REST API. Each HTTP request is logged as the parent with all event logs occurring during the request as child logs. This allows for easy viewing in GCP Log Explorer. The logs will also be correlated to Cloud Trace if you instrument your code with tracing.
+**logger** is an HTTP request logger that implements correlated logging to one of several supported platforms. Each HTTP request is logged as the parent log, with all logs generated during the request as child logs.
+
+The Logging destination is configured with an Exporter. This package provides Exporters for **Google Cloud Logging**
+and **Console Logging**.
+
+The _**GoogleCloudExporter**_ will also correlate logs to **Cloud Trace** if you instrument your code with tracing.

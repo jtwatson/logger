@@ -1,6 +1,10 @@
-// package logger is an HTTP request logger that implements correlated logging to GCP via Logging REST API. Each HTTP request is l
-// ogged as the parent with all event logs occurring during the request as child logs. This allows for easy viewing in
-// GCP Log Explorer. The logs will also be correlated to Cloud Trace if you instrument your code with tracing.
+// package logger is an HTTP request logger that implements correlated logging to one of several supported platforms.
+// Each HTTP request is logged as the parent log, with all logs generated during the request as child logs.
+//
+// The Logging destination is configured with an Exporter. This package provides Exporters for Google Cloud Logging
+// and Console Logging.
+//
+// The GoogleCloudExporter will also correlate logs to Cloud Trace if you instrument your code with tracing.
 package logger
 
 import (
