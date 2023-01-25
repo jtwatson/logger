@@ -45,7 +45,7 @@ func Test_fromContext(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := fromContext(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
+			if got := fromCtx(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("fromContext() = %v, want %v", got, tt.want)
 			}
 		})
@@ -79,7 +79,7 @@ func Test_fromRequest(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := fromRequest(tt.args.r); !reflect.DeepEqual(got, tt.want) {
+			if got := fromReq(tt.args.r); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("fromRequest() = %v, want %v", got, tt.want)
 			}
 		})

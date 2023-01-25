@@ -14,21 +14,21 @@ type Logger struct {
 	lg  ctxLogger
 }
 
-// FromCtx returns the logger from the context. If
+// Ctx returns the logger from the context. If
 // no logger is found, it will write to stderr
-func FromCtx(ctx context.Context) *Logger {
+func Ctx(ctx context.Context) *Logger {
 	return &Logger{
 		ctx: ctx,
-		lg:  fromContext(ctx),
+		lg:  fromCtx(ctx),
 	}
 }
 
-// FromReq returns the logger from the http request. If
+// Req returns the logger from the http request. If
 // no logger is found, it will write to stderr
-func FromReq(r *http.Request) *Logger {
+func Req(r *http.Request) *Logger {
 	return &Logger{
 		ctx: r.Context(),
-		lg:  fromRequest(r),
+		lg:  fromReq(r),
 	}
 }
 

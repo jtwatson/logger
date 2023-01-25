@@ -11,9 +11,9 @@ const (
 	logKey key = iota
 )
 
-// fromContext gets the logger out of the context.
-// If not logger is stored in the context, a NopLogger is returned.
-func fromContext(ctx context.Context) ctxLogger {
+// fromCtx gets the logger out of the context.
+// If no logger is stored in the context, a stderr logger is returned.
+func fromCtx(ctx context.Context) ctxLogger {
 	if ctx == nil {
 		return &stdErrLogger{}
 	}
@@ -25,14 +25,13 @@ func fromContext(ctx context.Context) ctxLogger {
 	return l
 }
 
-// fromRequest gets the logger in the request's context.
-// This is a shortcut for xlog.FromContext(r.Context())
-func fromRequest(r *http.Request) ctxLogger {
+// fromReq gets the logger in the request's context.
+func fromReq(r *http.Request) ctxLogger {
 	if r == nil {
 		return &stdErrLogger{}
 	}
 
-	return fromContext(r.Context())
+	return fromCtx(r.Context())
 }
 
 // newContext returns a copy of the parent context and associates it with the provided logger.

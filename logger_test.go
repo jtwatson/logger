@@ -73,7 +73,7 @@ func TestLogger(t *testing.T) {
 			r := &http.Request{}
 			r = r.WithContext(ctx)
 
-			for _, l := range []*Logger{FromCtx(ctx), FromReq(r)} {
+			for _, l := range []*Logger{Ctx(ctx), Req(r)} {
 				format := "Formatted %s"
 
 				l.Debug(tt.args.v2)
