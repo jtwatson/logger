@@ -7,9 +7,9 @@ require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/go-playground/errors/v5 v5.2.3
 	github.com/go-test/deep v1.0.8
-	go.opentelemetry.io/otel v1.11.2
-	go.opentelemetry.io/otel/sdk v1.11.2
-	go.opentelemetry.io/otel/trace v1.11.2
+	go.opentelemetry.io/otel v1.12.0
+	go.opentelemetry.io/otel/sdk v1.12.0
+	go.opentelemetry.io/otel/trace v1.12.0
 )
 
 require (
