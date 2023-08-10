@@ -107,7 +107,7 @@ func (l *consoleLogger) console(level string, c color, v interface{}) {
 }
 
 func (l *consoleLogger) consolef(level string, c color, format string, v ...interface{}) {
-	log.Printf(l.colorPrint(level, c)+": "+l.r.URL.Path+" "+format, v...)
+	log.Printf(l.colorPrint(level, c)+": "+l.r.Method+" "+l.r.URL.Path+" "+format, v...)
 }
 
 func (l *consoleLogger) colorPrint(s string, c color) string {
