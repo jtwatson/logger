@@ -1,6 +1,6 @@
 module github.com/jtwatson/logger
 
-go 1.19
+go 1.21.0
 
 require (
 	cloud.google.com/go/logging v1.7.0
