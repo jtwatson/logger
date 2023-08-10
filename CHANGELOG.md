@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jtwatson/logger/compare/v0.1.0...v0.1.1) (2023-08-10)
+
+
+### Features
+
+* Add HTTP Method to console logs ([#28](https://github.com/jtwatson/logger/issues/28)) ([1f6a5a0](https://github.com/jtwatson/logger/commit/1f6a5a0695af817137225720fe5c5f5086852b76))
+
 ## [0.1.0](https://github.com/jtwatson/logger/compare/v0.0.3...v0.1.0) (2023-01-25)
 
 
