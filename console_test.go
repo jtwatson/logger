@@ -218,17 +218,17 @@ func Test_consoleLogger(t *testing.T) {
 	}{
 		{
 			name: "Test with color", args: args{v: []interface{}{"Message"}, v2: "Message"},
-			wantDebug: "\x1b[37mDEBUG\x1b[0m: /path Message\n", wantDebugf: "\x1b[37mDEBUG\x1b[0m: /path Formatted Message\n",
-			wantInfo: "\x1b[34mINFO \x1b[0m: /path Message\n", wantInfof: "\x1b[34mINFO \x1b[0m: /path Formatted Message\n",
-			wantWarn: "\x1b[33mWARN \x1b[0m: /path Message\n", wantWarnf: "\x1b[33mWARN \x1b[0m: /path Formatted Message\n",
-			wantError: "\x1b[31mERROR\x1b[0m: /path Message\n", wantErrorf: "\x1b[31mERROR\x1b[0m: /path Formatted Message\n",
+			wantDebug: "\x1b[37mDEBUG\x1b[0m: /path Message\n", wantDebugf: "\x1b[37mDEBUG\x1b[0m: GET /path Formatted Message\n",
+			wantInfo: "\x1b[34mINFO \x1b[0m: /path Message\n", wantInfof: "\x1b[34mINFO \x1b[0m: GET /path Formatted Message\n",
+			wantWarn: "\x1b[33mWARN \x1b[0m: /path Message\n", wantWarnf: "\x1b[33mWARN \x1b[0m: GET /path Formatted Message\n",
+			wantError: "\x1b[31mERROR\x1b[0m: /path Message\n", wantErrorf: "\x1b[31mERROR\x1b[0m: GET /path Formatted Message\n",
 		},
 		{
 			name: "Test no color", args: args{v: []interface{}{"Message"}, v2: "Message", noColor: true},
-			wantDebug: "DEBUG: /path Message\n", wantDebugf: "DEBUG: /path Formatted Message\n",
-			wantInfo: "INFO : /path Message\n", wantInfof: "INFO : /path Formatted Message\n",
-			wantWarn: "WARN : /path Message\n", wantWarnf: "WARN : /path Formatted Message\n",
-			wantError: "ERROR: /path Message\n", wantErrorf: "ERROR: /path Formatted Message\n",
+			wantDebug: "DEBUG: /path Message\n", wantDebugf: "DEBUG: GET /path Formatted Message\n",
+			wantInfo: "INFO : /path Message\n", wantInfof: "INFO : GET /path Formatted Message\n",
+			wantWarn: "WARN : /path Message\n", wantWarnf: "WARN : GET /path Formatted Message\n",
+			wantError: "ERROR: /path Message\n", wantErrorf: "ERROR: GET /path Formatted Message\n",
 		},
 	}
 	for _, tt := range tests {
@@ -239,7 +239,7 @@ func Test_consoleLogger(t *testing.T) {
 			t.Cleanup(func() { log.SetOutput(os.Stderr) })
 
 			u, _ := url.Parse("http://some.domain.com/path")
-			l := &consoleLogger{r: &http.Request{URL: u}, noColor: tt.args.noColor}
+			l := &consoleLogger{r: &http.Request{Method: http.MethodGet, URL: u}, noColor: tt.args.noColor}
 			format := "Formatted %s"
 
 			l.Debug(ctx, tt.args.v2)
