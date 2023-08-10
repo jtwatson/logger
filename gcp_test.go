@@ -107,7 +107,7 @@ func TestGoogleCloudExporter_LogAll(t *testing.T) {
 }
 
 func TestGoogleCloudExporter_Middleware(t *testing.T) {
-	disableMetaServer(t)
+	disableMetaServertest(t)
 
 	type fields struct {
 		projectID string
@@ -532,7 +532,7 @@ func Test_gcpLogger(t *testing.T) {
 	}
 }
 
-func disableMetaServer(t *testing.T) {
+func disableMetaServertest(t *testing.T) {
 	t.Helper()
 
 	// Fix issue when logging.Client attempts to detect its

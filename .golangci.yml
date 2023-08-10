@@ -1,6 +1,17 @@
 linters-settings:
   dupl:
     threshold: 100
+  depguard:
+    rules:
+      main:
+        files:
+          - $all
+        allow:
+          - $gostd
+          - cloud.google.com/go/logging
+          - contrib.go.opencensus.io/exporter/stackdriver/propagation
+          - github.com/go-playground/errors
+          - github.com/go-test/deep
   funlen:
     lines: 100
     statements: 50

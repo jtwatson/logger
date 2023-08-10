@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewRequestLogger(t *testing.T) {
-	disableMetaServer(t)
+	disableMetaServertest(t)
 
 	type args struct {
 		e Exporter
