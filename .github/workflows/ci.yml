@@ -22,7 +22,7 @@ jobs:
         id: go
 
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get dependencies
         shell: bash
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
